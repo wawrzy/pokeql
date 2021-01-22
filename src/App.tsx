@@ -1,40 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client';
+
+import Pokemons from './pokemons';
+import 'semantic-ui-css/semantic.min.css';
+
+const client = new ApolloClient({
+  uri: 'https://graphql-pokeapi.vercel.app/api/graphql',
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          pokemons: {
+            // Don't cache separate results based on
+            // any of this field's arguments.
+            keyArgs: false,
+            // Concatenate the incoming list items with
+            // the existing list items.
+            merge(existing = {}, incoming) {
+              return {
+                ...existing,
+                ...incoming,
+                results: [...(existing.results || []), ...incoming.results],
+              };
+            },
+          },
+        },
+      },
+    },
+  }),
+});
 
 interface AppProps {}
 
 function App({}: AppProps) {
-  // Create the count state.
-  const [count, setCount] = useState(0);
-  // Create the counter (+1 every second).
-  useEffect(() => {
-    const timer = setTimeout(() => setCount(count + 1), 1000);
-    return () => clearTimeout(timer);
-  }, [count, setCount]);
-  // Return the App component.
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <p>
-          Page has been open for <code>{count}</code> seconds.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </p>
-      </header>
-    </div>
+    <ApolloProvider client={client}>
+      <Pokemons />
+    </ApolloProvider>
   );
 }
 
